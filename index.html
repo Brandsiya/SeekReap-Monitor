@@ -181,13 +181,6 @@
             100% { transform: rotate(360deg); }
         }
 
-        .timestamp {
-            font-size: 0.8em;
-            color: #999;
-            text-align: center;
-            margin-top: 10px;
-        }
-        
         .frontend-link {
             display: inline-block;
             margin-top: 10px;
@@ -199,7 +192,7 @@
             font-size: 0.85em;
             text-align: center;
         }
-        
+
         .frontend-link:hover {
             background: #5a67d8;
         }
@@ -256,6 +249,14 @@
                     </a>
                 </div>
             </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">🔍 Tier-7 Verification (Audit)</span>
+                    <span class="status-badge" id="tier7-status">Checking...</span>
+                </div>
+                <div id="tier7-details">Loading...</div>
+            </div>
         </div>
 
         <div style="text-align: center;">
@@ -271,6 +272,7 @@
         const TIER4_URL = 'https://seekreap-tier-4-dev.fly.dev';
         const TIER5_URL = 'https://seekreap-tier5-worker.fly.dev';
         const TIER6_URL = 'https://seekreap-backend-dev.fly.dev';
+        const TIER7_URL = 'https://seekreap-tier-7-dev.fly.dev';
         const FRONTEND_URL = 'https://seekreap-frontend.onrender.com';
 
         async function checkTier3() {
@@ -465,6 +467,51 @@
             }
         }
 
+        async function checkTier7() {
+            try {
+                const response = await fetch(`${TIER7_URL}/health`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    document.getElementById('tier7-status').textContent = '🟢 ONLINE';
+                    document.getElementById('tier7-status').className = 'status-badge status-up';
+                } else {
+                    document.getElementById('tier7-status').textContent = '🟡 DEGRADED';
+                    document.getElementById('tier7-status').className = 'status-badge status-degraded';
+                }
+                
+                document.getElementById('tier7-details').innerHTML = `
+                    <div class="info-row">
+                        <span class="info-label">Status:</span>
+                        <span class="info-value">${data.status || 'OK'}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Service:</span>
+                        <span class="info-value">Verification & Audit Layer</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Role:</span>
+                        <span class="info-value">Secondary Auditor</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Response:</span>
+                        <span class="info-value">✅ Active</span>
+                    </div>
+                `;
+                return true;
+            } catch (error) {
+                document.getElementById('tier7-status').textContent = '🔴 OFFLINE';
+                document.getElementById('tier7-status').className = 'status-badge status-down';
+                document.getElementById('tier7-details').innerHTML = `
+                    <div class="info-row">
+                        <span class="info-label">Error:</span>
+                        <span class="info-value" style="color: red;">${error.message}</span>
+                    </div>
+                `;
+                return false;
+            }
+        }
+
         async function checkFrontend() {
             try {
                 const response = await fetch(FRONTEND_URL);
@@ -517,6 +564,7 @@
                 checkTier4(),
                 checkTier5(),
                 checkTier6(),
+                checkTier7(),
                 checkFrontend()
             ]);
             
