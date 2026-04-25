@@ -197,7 +197,7 @@
         <div class="status-grid" id="statusGrid">
             <div class="card">
                 <div class="card-header">
-                    <span class="card-title">🏗️ Tier-3 Private</span>
+                    <span class="card-title">🏗️ Tier-3 Private (Core Engine)</span>
                     <span class="status-badge" id="tier3-status">Checking...</span>
                 </div>
                 <div id="tier3-details">Loading...</div>
@@ -205,7 +205,7 @@
 
             <div class="card">
                 <div class="card-header">
-                    <span class="card-title">🎯 Tier-4 Orchestrator</span>
+                    <span class="card-title">🎯 Tier-4 Orchestrator (Entry Point)</span>
                     <span class="status-badge" id="tier4-status">Checking...</span>
                 </div>
                 <div id="tier4-details">Loading...</div>
@@ -218,6 +218,14 @@
                     <span class="status-badge" id="tier5-status">Checking...</span>
                 </div>
                 <div id="tier5-details">Loading...</div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">🗄️ Tier-6 Backend (Future)</span>
+                    <span class="status-badge" id="tier6-status">Checking...</span>
+                </div>
+                <div id="tier6-details">Loading...</div>
             </div>
         </div>
 
@@ -233,6 +241,7 @@
         const TIER3_URL = 'https://seekreap-tier-3-dev.fly.dev';
         const TIER4_URL = 'https://seekreap-tier-4-dev.fly.dev';
         const TIER5_URL = 'https://seekreap-tier5-worker.fly.dev';
+        const TIER6_URL = 'https://seekreap-backend-dev.fly.dev';
 
         async function checkTier3() {
             try {
@@ -373,13 +382,67 @@
             }
         }
 
+        async function checkTier6() {
+            try {
+                const response = await fetch(`${TIER6_URL}/health`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    document.getElementById('tier6-status').textContent = '🟢 ONLINE';
+                    document.getElementById('tier6-status').className = 'status-badge status-up';
+                } else {
+                    document.getElementById('tier6-status').textContent = '🟡 DEGRADED';
+                    document.getElementById('tier6-status').className = 'status-badge status-degraded';
+                }
+                
+                document.getElementById('tier6-details').innerHTML = `
+                    <div class="info-row">
+                        <span class="info-label">Status:</span>
+                        <span class="info-value">${data.status || 'Unknown'}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Service:</span>
+                        <span class="info-value">Backend API</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Purpose:</span>
+                        <span class="info-value">Admin/Analytics</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Ready:</span>
+                        <span class="info-value">${response.ok ? '✅ Yes' : '⚠️ Needs Config'}</span>
+                    </div>
+                `;
+                return true;
+            } catch (error) {
+                document.getElementById('tier6-status').textContent = '⚠️ NOT READY';
+                document.getElementById('tier6-status').className = 'status-badge status-degraded';
+                document.getElementById('tier6-details').innerHTML = `
+                    <div class="info-row">
+                        <span class="info-label">Status:</span>
+                        <span class="info-value" style="color: #856404;">Waiting for configuration</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Service:</span>
+                        <span class="info-value">Backend API (Future)</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Missing:</span>
+                        <span class="info-value">REDIS_URL, SECRET_KEY</span>
+                    </div>
+                `;
+                return false;
+            }
+        }
+
         async function refreshAll() {
             document.getElementById('lastUpdate').innerHTML = '<span class="loading"></span> Updating...';
             
             await Promise.all([
                 checkTier3(),
                 checkTier4(),
-                checkTier5()
+                checkTier5(),
+                checkTier6()
             ]);
             
             const now = new Date();
