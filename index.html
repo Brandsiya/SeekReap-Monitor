@@ -187,6 +187,22 @@
             text-align: center;
             margin-top: 10px;
         }
+        
+        .frontend-link {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 8px 12px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 0.85em;
+            text-align: center;
+        }
+        
+        .frontend-link:hover {
+            background: #5a67d8;
+        }
     </style>
 </head>
 <body>
@@ -227,6 +243,19 @@
                 </div>
                 <div id="tier6-details">Loading...</div>
             </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">🎨 Tier-6 Frontend (Portal)</span>
+                    <span class="status-badge" id="frontend-status">Checking...</span>
+                </div>
+                <div id="frontend-details">Loading...</div>
+                <div style="margin-top: 15px; text-align: center;">
+                    <a href="https://seekreap-frontend.onrender.com" target="_blank" class="frontend-link">
+                        🌐 Open Certification Portal
+                    </a>
+                </div>
+            </div>
         </div>
 
         <div style="text-align: center;">
@@ -242,6 +271,7 @@
         const TIER4_URL = 'https://seekreap-tier-4-dev.fly.dev';
         const TIER5_URL = 'https://seekreap-tier5-worker.fly.dev';
         const TIER6_URL = 'https://seekreap-backend-dev.fly.dev';
+        const FRONTEND_URL = 'https://seekreap-frontend.onrender.com';
 
         async function checkTier3() {
             try {
@@ -435,6 +465,50 @@
             }
         }
 
+        async function checkFrontend() {
+            try {
+                const response = await fetch(FRONTEND_URL);
+                
+                if (response.ok || response.status === 200) {
+                    document.getElementById('frontend-status').textContent = '🟢 ONLINE';
+                    document.getElementById('frontend-status').className = 'status-badge status-up';
+                } else {
+                    document.getElementById('frontend-status').textContent = '🟡 DEGRADED';
+                    document.getElementById('frontend-status').className = 'status-badge status-degraded';
+                }
+                
+                document.getElementById('frontend-details').innerHTML = `
+                    <div class="info-row">
+                        <span class="info-label">Status:</span>
+                        <span class="info-value">✅ Live</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Service:</span>
+                        <span class="info-value">Certification Portal</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Host:</span>
+                        <span class="info-value">Render.com</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Response:</span>
+                        <span class="info-value">${response.status} ${response.statusText}</span>
+                    </div>
+                `;
+                return true;
+            } catch (error) {
+                document.getElementById('frontend-status').textContent = '🔴 OFFLINE';
+                document.getElementById('frontend-status').className = 'status-badge status-down';
+                document.getElementById('frontend-details').innerHTML = `
+                    <div class="info-row">
+                        <span class="info-label">Error:</span>
+                        <span class="info-value" style="color: red;">${error.message}</span>
+                    </div>
+                `;
+                return false;
+            }
+        }
+
         async function refreshAll() {
             document.getElementById('lastUpdate').innerHTML = '<span class="loading"></span> Updating...';
             
@@ -442,7 +516,8 @@
                 checkTier3(),
                 checkTier4(),
                 checkTier5(),
-                checkTier6()
+                checkTier6(),
+                checkFrontend()
             ]);
             
             const now = new Date();
