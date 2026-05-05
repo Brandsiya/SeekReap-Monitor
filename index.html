@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SeekReap — System Monitor</title>
+<style>
+:root{--bg:#080a0d;--surface:#0e1014;--border:#1e2229;--gold:#C9993A;
+  --green:#3DB87A;--yellow:#E8A040;--red:#E05555;--blue:#569cd6;
+  --text:#FAFAF8;--dim:#8a8a9a;--tiny:#555}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:"DM Sans",system-ui,sans-serif;font-size:13px}
+.hdr{display:flex;align-items:center;gap:12px;padding:14px 20px;border-bottom:1px solid var(--border);background:var(--surface)}
+.hdr-logo{font-size:1.1rem;font-weight:700;color:var(--gold)}
+.hdr-spacer{flex:1}
+.hdr-btn{background:transparent;border:1px solid var(--border);color:var(--dim);border-radius:4px;padding:5px 12px;font-size:.78rem;cursor:pointer}
+.hdr-btn:hover{border-color:var(--gold);color:var(--gold)}
+.hdr-time{color:var(--tiny);font-size:.74rem;min-width:115px;text-align:right}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(310px,1fr));gap:12px;padding:14px 16px}
+.gw{grid-column:1/-1}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:6px;overflow:hidden}
+.ch{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--border);font-size:.76rem;font-weight:600;color:var(--dim);letter-spacing:.06em;text-transform:uppercase}
+.cb{padding:12px 14px}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.g{background:var(--green)}.y{background:var(--yellow)}.r{background:var(--red)}.x{background:#333}
+.ir{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #13151a}
+.ir:last-child{border-bottom:none}
+.il{color:var(--dim);font-size:.79rem}
+.iv{font-size:.81rem;font-weight:600;text-align:right}
+.vg{color:var(--green)}.vy{color:var(--yellow)}.vr{color:var(--red)}.vb{color:var(--blue)}.vd{color:var(--dim)}.vo{color:var(--gold)}
+.dep{display:flex;align-items:center;justify-content:center;gap:0;padding:14px 8px;flex-wrap:wrap}
+.dn{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:68px}
+.dn-name{font-size:.7rem;color:var(--dim);font-weight:600;letter-spacing:.04em}
+.dn-dot{width:34px;height:34px;border-radius:50%;border:2px solid #333;display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:700;transition:all .3s}
+.da{color:#333;font-size:1rem;padding:0 2px;margin-bottom:18px}
+.dl{font-size:.63rem;color:var(--tiny)}
+.fi{padding:7px 0;border-bottom:1px solid #13151a;font-size:.81rem;display:flex;align-items:flex-start;gap:7px}
+.fi:last-child{border-bottom:none}
+.fn{color:var(--green);padding:10px 0;font-size:.84rem}
+.ovr-row{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+.ob{padding:5px 12px;border-radius:4px;border:1px solid var(--border);background:transparent;color:var(--dim);font-size:.75rem;cursor:pointer;transition:all .2s}
+.ob.ag{border-color:var(--green);color:var(--green);background:rgba(61,184,122,.08)}
+.ob.ay{border-color:var(--yellow);color:var(--yellow);background:rgba(232,160,64,.08)}
+.ob.ar{border-color:var(--red);color:var(--red);background:rgba(224,85,85,.08)}
+.as-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
+.as{flex:1;min-width:72px;text-align:center;background:#0a0c10;border:1px solid var(--border);border-radius:5px;padding:9px 5px}
+.as-n{font-size:1.35rem;font-weight:700}
+.as-l{font-size:.66rem;color:var(--dim);margin-top:2px}
+.spin{display:inline-block;width:12px;height:12px;border:2px solid #333;border-top-color:var(--gold);border-radius:50%;animation:sp .7s linear infinite;vertical-align:middle}
+@keyframes sp{to{transform:rotate(360deg)}}
+.pb{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:3px;font-size:.73rem;font-weight:600}
+</style>
+</head>
+<body>
+<div class="hdr">
+  <span class="hdr-logo">SeekReap · Monitor</span>
+  <span style="color:var(--border)">|</span>
+  <span style="color:var(--dim);font-size:.79rem">System v2</span>
+  <div class="hdr-spacer"></div>
+  <button class="hdr-btn" onclick="refresh()">↻ Refresh</button>
+  <div class="hdr-time" id="ts">—</div>
+</div>
+
+<div class="grid">
+
+<div class="card gw">
+  <div class="ch">🔗 Dependency Chain</div>
+  <div class="cb">
+    <div class="dep">
+      <div class="dn"><div class="dn-name">TIER-3</div><div class="dn-dot" id="dn3">—</div><div class="dl" id="dl3">—</div></div>
+      <div class="da">→</div>
+      <div class="dn"><div class="dn-name">TIER-4</div><div class="dn-dot" id="dn4">—</div><div class="dl" id="dl4">—</div></div>
+      <div class="da">→</div>
+      <div class="dn"><div class="dn-name">TIER-5</div><div class="dn-dot" id="dn5">—</div><div class="dl" id="dl5">—</div></div>
+      <div class="da">→</div>
+      <div class="dn"><div class="dn-name">TIER-7</div><div class="dn-dot" id="dn7">—</div><div class="dl" id="dl7">—</div></div>
+      <div class="da">+</div>
+      <div class="dn"><div class="dn-name">DB</div><div class="dn-dot" id="dnDB">—</div><div class="dl"></div></div>
+    </div>
+  </div>
+</div>
+
+<div class="card"><div class="ch">🚨 Red Flags</div><div class="cb" id="rf"><div class="spin"></div></div></div>
+<div class="card"><div class="ch"><span id="t4d" class="dot x"></span>&nbsp;Tier-4 · Orchestrator</div><div class="cb" id="t4b"><div class="spin"></div></div></div>
+<div class="card"><div class="ch"><span id="t5d" class="dot x"></span>&nbsp;Tier-5 · Worker Pool</div><div class="cb" id="t5b"><div class="spin"></div></div></div>
+<div class="card"><div class="ch">📊 Queue Flow</div><div class="cb" id="qf"><div class="spin"></div></div></div>
+<div class="card"><div class="ch">💳 Payment Systems</div><div class="cb" id="pb"><div class="spin"></div></div></div>
+<div class="card"><div class="ch"><span id="t7d" class="dot x"></span>&nbsp;Tier-7 · Audit</div><div class="cb" id="t7b"><div class="spin"></div></div></div>
+<div class="card"><div class="ch">🔬 Fingerprint Pipeline</div><div class="cb" id="fp"><div class="spin"></div></div></div>
+<div class="card"><div class="ch">✅ Last Successful Ops</div><div class="cb" id="ls"><div class="spin"></div></div></div>
+<div class="card"><div class="ch">⚠️ Recent Errors</div><div class="cb" id="re"><div class="spin"></div></div></div>
+
+<div class="card">
+  <div class="ch">🛠️ Manual Override</div>
+  <div class="cb">
+    <p style="color:var(--dim);font-size:.78rem;margin-bottom:8px">Force system status when metrics look ok but you know it is broken.</p>
+    <div class="ovr-row">
+      <button class="ob" id="ob-ok"       onclick="setOvr('ok')">🟢 Force OK</button>
+      <button class="ob" id="ob-degraded" onclick="setOvr('degraded')">🟡 Force DEGRADED</button>
+      <button class="ob" id="ob-down"     onclick="setOvr('down')">🔴 Force DOWN</button>
+      <button class="ob" id="ob-clear"    onclick="setOvr(null)">✕ Clear</button>
+    </div>
+    <div id="ovr-msg" style="margin-top:9px;font-size:.78rem;color:var(--dim)"></div>
+  </div>
+</div>
+
+</div>
+
+<script src="routes.js"></script>
+<script>
+var AUTO_MS = 30000;
+var T7S = window.TIER7_SECRET || 'seekreap-tier7-internal';
+var U = {
+  t3: window.TIER3_URL || '',
+  t4: window.TIER4_URL || '',
+  t5: window.TIER5_URL || '',
+  t7: window.TIER7_URL || '',
+};
+
+var S = { ovr: null, lat: {}, sts: {}, m: {}, ls: {} };
+
+async function tf(url, opts) {
+  var t0 = performance.now();
+  try {
+    var res = await fetch(url, opts||{});
+    var lat = Math.round(performance.now()-t0);
+    var d   = await res.json().catch(function(){return{};});
+    return {ok:res.ok, d:d, lat:lat};
+  } catch(e) {
+    return {ok:false, d:{}, lat:null, err:e.message};
+  }
+}
+
+function sc(s){
+  if(s==='online')   return {dot:'g', vc:'vg', lbl:'ONLINE'};
+  if(s==='degraded') return {dot:'y', vc:'vy', lbl:'DEGRADED'};
+  return                    {dot:'r', vc:'vr', lbl:'OFFLINE'};
+}
+function lc(ms){if(!ms)return'vd';if(ms<400)return'vg';if(ms<1500)return'vy';return'vr';}
+function is(h,lat){
+  if(!h||!h.ok)return'offline';
+  if(lat>2500)return'degraded';
+  var d=h.d||{};if(d.status==='degraded')return'degraded';
+  return'online';
+}
+function fm(ms){return ms!==null&&ms!==undefined?ms+' ms':'—';}
+function ft(ts){if(!ts)return'—';return new Date(ts).toLocaleTimeString('en-US',{hour12:false});}
+function ir(l,v,c){return'<div class="ir"><span class="il">'+l+'</span><span class="iv '+(c||'')+'">'+v+'</span></div>';}
+
+async function fetchAll(){
+  document.getElementById('ts').textContent='Refreshing…';
+  var h = {'x-tier7-secret':T7S};
+  var [r3,r4,r5,r7,r4m,r4e,r7s] = await Promise.all([
+    tf(U.t3+'/health'),
+    tf(U.t4+'/health'),
+    tf(U.t5+'/health'),
+    tf(U.t7+'/health'),
+    tf(U.t4+'/api/metrics/latency'),
+    tf(U.t4+'/api/metrics/errors'),
+    tf(U.t7+'/api/audit/stats/summary',{headers:h})
+  ]);
+  S.lat={t3:r3.lat,t4:r4.lat,t5:r5.lat,t7:r7.lat};
+  S.sts={t3:is(r3,r3.lat),t4:is(r4,r4.lat),t5:is(r5,r5.lat),t7:is(r7,r7.lat)};
+  S.m={t4:r4m.ok?r4m.d:{},t5:r5.ok?r5.d:{},errs:r4e.ok?(r4e.d.errors||[]):[],audit:r7s.ok?r7s.d:{}};
+  S.ls.t4=r4.ok?new Date().toISOString():S.ls.t4;
+  S.ls.t5=r5.ok?new Date().toISOString():S.ls.t5;
+  S.ls.t7=r7.ok?new Date().toISOString():S.ls.t7;
+  S.ls.audit=S.m.audit.last_audit;
+  renderAll();
+  document.getElementById('ts').textContent='Updated '+new Date().toLocaleTimeString();
+}
+
+function renderAll(){renderDep();renderFlags();renderT4();renderT5();renderQF();renderPay();renderT7();renderFP();renderLS();renderErrs();}
+
+function renderDep(){
+  function sn(id,lid,key){
+    var node=document.getElementById(id);if(!node)return;
+    var cs={online:'#3DB87A',degraded:'#E8A040',offline:'#E05555'};
+    var lbs={online:'OK',degraded:'~',offline:'✕'};
+    var s=S.sts[key];
+    node.style.background=s?cs[s]:'#1a1a1a';
+    node.style.borderColor=s?cs[s]:'#333';
+    node.textContent=s?lbs[s]:'?';
+    var le=document.getElementById(lid);if(le)le.textContent=S.lat[key]?fm(S.lat[key]):'—';
+  }
+  sn('dn3','dl3','t3');sn('dn4','dl4','t4');sn('dn5','dl5','t5');sn('dn7','dl7','t7');
+  var db=document.getElementById('dnDB');
+  if(db){
+    db.style.background=S.sts.t4==='online'?'#3DB87A':'#E05555';
+    db.textContent=S.sts.t4==='online'?'OK':'✕';
+  }
+}
+
+function renderFlags(){
+  var flags=[];
+  if(S.sts.t4==='offline')flags.push({i:'🔴',m:'Tier-4 OFFLINE — certifications blocked'});
+  if(S.sts.t5==='offline')flags.push({i:'🔴',m:'Tier-5 OFFLINE — jobs not processing'});
+  if(S.sts.t7==='offline')flags.push({i:'🟡',m:'Tier-7 OFFLINE — audit trail unavailable'});
+  var t5=S.m.t5||{};
+  if((t5.queue_depth||0)>100)flags.push({i:'⚠️',m:'Queue backlog: '+t5.queue_depth+' jobs'});
+  if((t5.failed_24h||0)>10)flags.push({i:'❌',m:'High failure rate: '+t5.failed_24h+' in 24h'});
+  if((t5.stuck_jobs||0)>0)flags.push({i:'⚠️',m:'Stuck jobs: '+t5.stuck_jobs});
+  if(S.lat.t4>2000)flags.push({i:'🐢',m:'Tier-4 latency degraded: '+fm(S.lat.t4)});
+  if((S.m.audit.flagged||0)>0)flags.push({i:'🔍',m:'Audit flagged '+S.m.audit.flagged+' submissions'});
+  if(S.ovr)flags.unshift({i:'🛠️',m:'Manual override: '+S.ovr.toUpperCase()});
+  var el=document.getElementById('rf');
+  el.innerHTML=flags.length
+    ?flags.map(function(f){return'<div class="fi"><span>'+f.i+'</span><span>'+f.m+'</span></div>';}).join('')
+    :'<div class="fn">✅ No critical issues</div>';
+}
+
+function renderT4(){
+  var s=S.sts.t4||'offline';var c=sc(s);var m=S.m.t4||{};
+  document.getElementById('t4d').className='dot '+c.dot;
+  document.getElementById('t4b').innerHTML=
+    ir('Status',c.lbl,c.vc)+
+    ir('Latency',fm(S.lat.t4),lc(S.lat.t4))+
+    ir('Submissions (24h)',m.submissions_24h||'—','vo')+
+    ir('Failures (24h)',m.failed_24h||0,(m.failed_24h>5?'vr':'vg'))+
+    ir('Avg Latency',m.avg_latency_ms?fm(m.avg_latency_ms):'—','vb')+
+    ir('Queue Depth',m.queue_depth||0,'')+
+    ir('DB',m.db||'—','');
+}
+
+function renderT5(){
+  var s=S.sts.t5||'offline';var c=sc(s);var m=S.m.t5||{};
+  document.getElementById('t5d').className='dot '+c.dot;
+  document.getElementById('t5b').innerHTML=
+    ir('Status',c.lbl,c.vc)+
+    ir('Latency',fm(S.lat.t5),lc(S.lat.t5))+
+    ir('Processing Host',m.processing_host||'—','vd')+
+    ir('Jobs Processed',m.jobs_processed||0,'vg')+
+    ir('Stuck Jobs',m.stuck_jobs||0,(m.stuck_jobs>0?'vr':'vg'))+
+    ir('FP Pending',m.fp_pending||0,'')+
+    ir('FP Failures',m.fp_failed||0,(m.fp_failed>0?'vy':'vg'));
+}
+
+function renderQF(){
+  var t5=S.m.t5||{};
+  var inF=t5.jobs_in_last_minute||0,outF=t5.jobs_out_last_minute||0;
+  var depth=t5.queue_depth||0,mx=Math.max(inF,outF,1);
+  var iH=Math.max(4,Math.round((inF/mx)*50)),oH=Math.max(4,Math.round((outF/mx)*50));
+  document.getElementById('qf').innerHTML=
+    '<div style="display:flex;gap:8px;align-items:flex-end;height:60px;padding:6px 0">'+
+    '<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px">'+
+    '<div style="font-size:.7rem;font-weight:600;color:var(--blue)">'+inF+'/min</div>'+
+    '<div style="width:100%;height:'+iH+'px;background:var(--blue);border-radius:3px 3px 0 0"></div>'+
+    '<div style="font-size:.66rem;color:var(--dim)">In</div></div>'+
+    '<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px">'+
+    '<div style="font-size:.7rem;font-weight:600;color:var(--green)">'+outF+'/min</div>'+
+    '<div style="width:100%;height:'+oH+'px;background:var(--green);border-radius:3px 3px 0 0"></div>'+
+    '<div style="font-size:.66rem;color:var(--dim)">Out</div></div></div>'+
+    ir('Queue Depth',depth,(depth>100?'vr':depth>20?'vy':'vg'))+
+    ir('Flow',outF>=inF?'✅ Healthy':'⚠️ Backlog',(outF>=inF?'vg':'vr'));
+}
+
+function renderPay(){
+  tf(U.t4+'/api/payment/probe').then(function(r){
+    var d=r.d||{};
+    document.getElementById('pb').innerHTML=
+      '<div class="ir"><span class="il">PayFast</span>'+
+      '<span class="pb" style="background:'+(d.payfast_ok?'rgba(61,184,122,.12)':'rgba(224,85,85,.1)')+
+      ';color:'+(d.payfast_ok?'var(--green)':'var(--red)')+';">'+(d.payfast_ok?'🟢 Ready':'🔴 '+(d.payfast_status||'Unavailable'))+'</span></div>'+
+      '<div class="ir"><span class="il">Paystack</span>'+
+      '<span class="pb" style="background:'+(d.paystack_ok?'rgba(61,184,122,.12)':'rgba(224,85,85,.1)')+
+      ';color:'+(d.paystack_ok?'var(--green)':'var(--red)')+';">'+(d.paystack_ok?'🟢 Ready':'🔴 '+(d.paystack_status||'Unavailable'))+'</span></div>'+
+      ir('Signature',d.sig_valid?'✅ Valid':'❌ Invalid',d.sig_valid?'vg':'vr')+
+      ir('Webhook',d.webhook_ok?'Reachable':'Unchecked',d.webhook_ok?'vg':'vy');
+  }).catch(function(){
+    document.getElementById('pb').innerHTML='<div style="color:var(--dim);font-size:.78rem">Payment probe unavailable</div>';
+  });
+}
+
+function renderT7(){
+  var s=S.sts.t7||'offline';var c=sc(s);var a=S.m.audit||{};
+  document.getElementById('t7d').className='dot '+c.dot;
+  document.getElementById('t7b').innerHTML=
+    ir('Status',c.lbl,c.vc)+
+    ir('Latency',fm(S.lat.t7),lc(S.lat.t7))+
+    '<div class="as-row">'+
+    '<div class="as"><div class="as-n">'+(a.total||0)+'</div><div class="as-l">Total</div></div>'+
+    '<div class="as"><div class="as-n" style="color:var(--green)">'+(a.passed||0)+'</div><div class="as-l">Passed</div></div>'+
+    '<div class="as"><div class="as-n" style="color:var(--yellow)">'+(a.flagged||0)+'</div><div class="as-l">Flagged</div></div>'+
+    '<div class="as"><div class="as-n" style="color:var(--red)">'+(a.duplicates||0)+'</div><div class="as-l">Dups</div></div>'+
+    '</div>';
+}
+
+function renderFP(){
+  var t5=S.m.t5||{};
+  document.getElementById('fp').innerHTML=
+    ir('FP Pending',t5.fp_pending||0,(t5.fp_pending>10?'vy':'vg'))+
+    ir('FP Failures (24h)',t5.fp_failed||0,(t5.fp_failed>0?'vr':'vg'))+
+    ir('FP Completed',t5.fp_done||0,'vg')+
+    ir('Avg FP Time',t5.fp_avg_ms?fm(t5.fp_avg_ms):'—','vb')+
+    ir('Visual Matches',t5.visual_matches||0,'')+
+    ir('Audio Matches',t5.audio_matches||0,'');
+}
+
+function renderLS(){
+  document.getElementById('ls').innerHTML=
+    '<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:.78rem"><span style="color:var(--dim)">Tier-4 health</span><span style="font-family:monospace">'+ft(S.ls.t4)+'</span></div>'+
+    '<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:.78rem"><span style="color:var(--dim)">Tier-5 health</span><span style="font-family:monospace">'+ft(S.ls.t5)+'</span></div>'+
+    '<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:.78rem"><span style="color:var(--dim)">Tier-7 health</span><span style="font-family:monospace">'+ft(S.ls.t7)+'</span></div>'+
+    '<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:.78rem"><span style="color:var(--dim)">Last audit</span><span style="font-family:monospace">'+ft(S.ls.audit)+'</span></div>';
+}
+
+function renderErrs(){
+  var errs=S.m.errs||[];var el=document.getElementById('re');
+  if(!errs.length){el.innerHTML='<div class="fn" style="font-size:.79rem">✅ No recent errors</div>';return;}
+  el.innerHTML=errs.slice(0,5).map(function(e){
+    return'<div style="padding:6px 0;border-bottom:1px solid #13151a;font-size:.78rem;display:flex;gap:8px">'+
+    '<span style="color:var(--tiny);white-space:nowrap;flex-shrink:0">'+ft(e.ts||e.created_at)+'</span>'+
+    '<span style="color:var(--red);word-break:break-word">'+(e.message||e.error||JSON.stringify(e))+'</span></div>';
+  }).join('');
+}
+
+function setOvr(v){
+  S.ovr=v;
+  ['ok','degraded','down'].forEach(function(k){
+    var b=document.getElementById('ob-'+k);
+    if(b)b.className='ob'+(v===k?' a'+(k==='ok'?'g':k==='degraded'?'y':'r'):'');
+  });
+  document.getElementById('ovr-msg').textContent=v?'Override active: '+v.toUpperCase():'Override cleared.';
+  renderFlags();
+}
+
+function refresh(){fetchAll();}
+fetchAll();
+setInterval(fetchAll,AUTO_MS);
+</script>
+</body>
+</html>
